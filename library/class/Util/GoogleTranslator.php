@@ -1,8 +1,8 @@
 <?php
 /**
- * GOOGLE翻译API
+ * GOOGLE路颅脪毛API
  * $Id$
- * $str = Util_GoogleTranslator::translater($text);
+ * $str = Util_GoogleTranslator::translate($text);
  * @author Abu
  *
  */
@@ -10,7 +10,7 @@ class Util_GoogleTranslator {
 	const GOOGLE_API_URL = 'http://translate.google.com/translate_t';
 	
 	/**
-	 * 处理数据并返回
+	 * 麓娄脌铆脢媒戮脻虏垄路碌禄脴
 	 * 
 	 * @param string $text
 	 * @param string $from
@@ -34,7 +34,7 @@ class Util_GoogleTranslator {
 	
 	/**
 	 * 
-	 * 发送请求返回数据
+	 * 路垄脣脥脟毛脟贸路碌禄脴脢媒戮脻
 	 * @param string $url
 	 * @param string $text
 	 * @param string $from
@@ -44,15 +44,15 @@ class Util_GoogleTranslator {
 		$str = "";
 		if ($url != "" && $text != "") {
 			$ch = curl_init ( $url );
-			//设定以文本方式返回数据
+			//脡猫露篓脪脭脦脛卤戮路陆脢陆路碌禄脴脢媒戮脻
 			curl_setopt ( $ch, CURLOPT_RETURNTRANSFER, 1 );
-			//允许GOOGLE将请求重定向并从重定向页面接收返回内容
+			//脭脢脨铆GOOGLE陆芦脟毛脟贸脰脴露篓脧貌虏垄麓脫脰脴露篓脧貌脪鲁脙忙陆脫脢脮路碌禄脴脛脷脠脻
 			curl_setopt ( $ch, CURLOPT_FOLLOWLOCATION, 1 );
 			curl_setopt ( $ch, CURLOPT_TIMEOUT, 15 );
-			//这里组织发送参数，基本上不用改，如果一定要改，建议定义变量修改
+			//脮芒脌茂脳茅脰炉路垄脣脥虏脦脢媒拢卢禄霉卤戮脡脧虏禄脫脙赂脛拢卢脠莽鹿没脪禄露篓脪陋赂脛拢卢陆篓脪茅露篓脪氓卤盲脕驴脨脼赂脛
 			$fields = array ('hl=zh-CN', 'langpair=' . $from . '|' . $to, 'ie=UTF-8', 'text=' . $text );
 			$fields = implode ( '&', $fields );
-			//发送POST请求
+			//路垄脣脥POST脟毛脟贸
 			curl_setopt ( $ch, CURLOPT_POST, 1 );
 			curl_setopt ( $ch, CURLOPT_POSTFIELDS, $fields );
 			$str = curl_exec ( $ch );
