@@ -125,7 +125,7 @@ server {
 
 ### 6. 测试
 
-> http:// catalog.ebhost /item/info/1234
+> http:// catalog.test /item/info/1234
 
 将映射为：
 
