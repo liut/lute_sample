@@ -55,11 +55,12 @@ class Cache_Memcache extends Cache implements ArrayAccess
 	 *
 	 * @return Cache_Memcache
 	 * @access public
+	 * @deprecated by Cache::farm('memcache)
 	 */
 	public static function &getInstance() 
 	{
 		if (!isset(self::$_instances[0]) || !self::$_instances[0]) {
-			self::$_instances[0] = Cache::factory('memcache');
+			self::$_instances[0] = Cache::farm('memcache');
 		}
 		return self::$_instances[0];
 	}

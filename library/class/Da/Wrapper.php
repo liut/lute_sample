@@ -37,17 +37,25 @@ final class Da_Wrapper
 	 */
 	public static function dbo($table_key)
 	{
-		$arr = explode(".", $table_key, 4);
-		if(count($arr) < 3) $arr[2] = null;
-		list($ns, $db, $node) = $arr;
-		$cfg = self::configArray($ns, $db, $node);
-
-		if(!is_array($cfg) || !isset($cfg['username'])) {
-			throw new Exception('config dsn ['.$table_key.'] not found!');
+		$arr = self::parseConfigKey($table_key);
+		if ($arr === FALSE) {
+			$cfg = Loader::config(self::CONF_NAME);
+			if (isset($cfg['default'])) {
+				$arr = self::parseConfigKey($cfg['default']);
+			}
 		}
-		$key = $ns.'.'.$db.($node != null?'.'.$node:'');
+		if ($arr === FALSE) {
+			throw new InvalidArgumentException('invalid table key');
+		}
+		//list($ns, $db, $node) = $arr;
+		$cfg = self::configArray($arr);
+
+		$key = $arr['key'];
 
 		if(!isset(self::$dbos[$key]) || self::$dbos[$key] == null) {
+			if(!is_array($cfg) || !isset($cfg['dsn']) || !isset($cfg['username'])) {
+				throw new Exception('config dsn ['.$table_key.'] not found!');
+			}
 			//echo '<!--', $key, print_r(debug_backtrace(), TRUE), '-->', PHP_EOL;
 			self::$dbos[$key] = new PDO($cfg['dsn'], $cfg['username'], $cfg['password']);
 			if(!empty($cfg['charset'])) {
@@ -62,34 +70,65 @@ final class Da_Wrapper
 
 		return self::$dbos[$key];
 	}
+	
+	/**
+	 * 切分出数据库配置项名称
+	 * @param string $table_key format: ns.db[.node][[.schema].table]
+	 * @return array
+	 */
+	public static function parseConfigKey($str)
+	{
+		if (preg_match("#^([a-z]{2,9})\.([a-z][a-z0-9_]{1,9})(\.[a-z])?((\.\w{4,9})?\.([a-z][a-z0-9_]{1,9}))?$#i", $str, $match)) {
+			
+			$arr = array(
+				'ns' => $match[1],
+				'db' => $match[2]
+			);
+			$arr['node'] = isset($match[3]) ? $match[3] : '';
+			if (isset($match[5])) {
+				$arr['schema'] = $match[5];
+				$arr['table'] = $match[6];
+			}
+			$arr['key'] = $arr['ns'] . '.' . $arr['db'] . $arr['node']; // ns.db.node
+			!empty($arr['node']) && $arr['node'] = substr($arr['node'], 1);
+			!empty($arr['schema']) && $arr['schema'] = substr($arr['schema'], 1);
+			return $arr;
+		}
+		return FALSE;
+	}
 
 	/**
 	 * function description
 	 * 
-	 * @param string $fn
+	 * @param string $config
 	 * @return void
 	 */
-	public static function configArray($ns, $db = null, $node = null)
+	public static function configArray($arr)
 	{
+		extract($arr);
 		$cfg = Loader::config(self::CONF_NAME);
 		if(isset($cfg[$ns])) $cfg = & $cfg[$ns];
-		if($db != null && isset($cfg[$db])) $cfg = & $cfg[$db];
-		if($node != null && isset($cfg[$node])) $cfg = & $cfg[$node];
+		if(isset($cfg[$db])) $cfg = & $cfg[$db];
+		if(!empty($node) && isset($cfg[$node])) $cfg = & $cfg[$node];
 
 		return $cfg;
 	}
 	
-	public static function configValue($ns, $db = null, $node = null, $name)
+	/**
+	 * @deprecated
+	 */
+	public static function configValue($arr, $name)
 	{
+		extract($arr);
 		$cfg = Loader::config(self::CONF_NAME);
 		$ret = & $cfg[$name];
 		if(isset($cfg[$ns])) $cfg = & $cfg[$ns];
 		if(isset($cfg[$name])) $ret = & $cfg[$name];
-		if($db != null && isset($cfg[$db])) {
+		if(isset($cfg[$db])) {
 			$cfg = & $cfg[$db];
 			if(isset($cfg[$name])) $ret = & $cfg[$name];
 		}
-		if($node != null && isset($cfg[$node])) {
+		if(!empty($node) && isset($cfg[$node])) {
 			$cfg = & $cfg[$node];
 			if(isset($cfg[$name])) $ret = & $cfg[$name];
 		}
@@ -105,9 +144,9 @@ final class Da_Wrapper
 	 * 
 	 * @return this
 	 */
-	public static function select()
+	public static function select($cond = array())
 	{
-		return Da_Wrapper_Abstract::select();
+		return Da_Wrapper_Abstract::select($cond);
 	}
 
 	/**
@@ -162,11 +201,11 @@ final class Da_Wrapper
 			}
 		}
 		if(!$sth) {
-			Sp_Log::warning(__CLASS__ . '::'. __FUNCTION__ .' : '.print_r($dbh->errorInfo(),true) . "\n" . $table_key . ': ' . $sql);
+			Log::warning(__CLASS__ . '::'. __FUNCTION__ .' : '.print_r($dbh->errorInfo(),true) . "\n" . $table_key . ': ' . $sql);
 			return false;
 		}
 		if(isset($ret) && !$ret) {
-			Sp_Log::warning(__CLASS__ . '::'. __FUNCTION__ .' : '.print_r($sth->errorInfo(),true) . "\n" . $table_key . ': ' . $sql);
+			Log::warning(__CLASS__ . '::'. __FUNCTION__ .' : '.print_r($sth->errorInfo(),true) . "\n" . $table_key . ': ' . $sql);
 			return false;
 		}
 		return false;
@@ -194,11 +233,11 @@ final class Da_Wrapper
 			}
 		}
 		if(!$sth) {
-			Sp_Log::warning(__CLASS__ . '::'. __FUNCTION__ .' : '.print_r($dbh->errorInfo(),true) . "\n" . $table_key . ': ' . $sql);
+			Log::warning(__CLASS__ . '::'. __FUNCTION__ .' : '.print_r($dbh->errorInfo(),true) . "\n" . $table_key . ': ' . $sql);
 			return false;
 		}
 		if(isset($ret) && !$ret) {
-			Sp_Log::warning(__CLASS__ . '::'. __FUNCTION__ .' : '.print_r($sth->errorInfo(),true) . "\n" . $table_key . ': ' . $sql);
+			Log::warning(__CLASS__ . '::'. __FUNCTION__ .' : '.print_r($sth->errorInfo(),true) . "\n" . $table_key . ': ' . $sql);
 			return false;
 		}
 		return false;
@@ -249,7 +288,7 @@ final class Da_Wrapper
 			}
 		}
 		if(!$sth) {
-			Sp_Log::warning(__CLASS__ . '::'. __FUNCTION__ .' : '.print_r($dbh->errorInfo(),true) . "\n" . $table_key . ': ' . $sql);
+			Log::warning(__CLASS__ . '::'. __FUNCTION__ .' : '.print_r($dbh->errorInfo(),true) . "\n" . $table_key . ': ' . $sql);
 			return false;
 		}
 		return false;
@@ -293,7 +332,7 @@ final class Da_Wrapper
 			if($sth) $sth->execute($params);
 		}
 		if(!$sth) {
-			Sp_Log::warning(__CLASS__ . '::'. __FUNCTION__ .' : '.print_r($dbh->errorInfo(),true) . "\n" . $table_key . ': ' . $sql);
+			Log::warning(__CLASS__ . '::'. __FUNCTION__ .' : '.print_r($dbh->errorInfo(),true) . "\n" . $table_key . ': ' . $sql);
 			return false;
 		}
 		return $sth;
@@ -317,15 +356,13 @@ final class Da_Wrapper
 	 */
 	public static function mongo($table_key)
 	{
-		$arr = explode(".", $table_key, 4);
-		if(count($arr) < 3) $arr[2] = null;
-		list($ns, $db, $node) = $arr;
-		$cfg = self::configArray($ns, $db, $node);
+		$arr = self::parseConfigKey($table_key);
+		$cfg = self::configArray($arr);
 
 		if(!is_array($cfg) || !isset($cfg['servers'])) {
 			throw new Exception('config dsn ['.$table_key.'] not found!');
 		}
-		$key = $ns.'.'.$db.($node != null?'.'.$node:'');
+		$key = $arr['key'];
 
 		static $mgs = array();
 		if(!isset($mgs[$key]) || $mgs[$key] == null) {

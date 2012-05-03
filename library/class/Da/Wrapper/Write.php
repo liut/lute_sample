@@ -46,13 +46,13 @@ class Da_Wrapper_Write extends Da_Wrapper_Abstract
 	{
 		$sql = $this->genSql();
 		$ret = false;
-		Sp_Log::debug(__CLASS__ . '->'. __FUNCTION__ .': '.$sql);
+		Log::debug(__CLASS__ . '->'. __FUNCTION__ .': '.$sql);
 		$dbh = $this->getDbh(); //var_dump($dbh);
 		$input_parms = $this->getParams(); //var_dump($input_parms);
 		if(is_array($input_parms) && count($input_parms) > 0) {
 			$sth = $dbh->prepare($sql);
 			if(!$sth) {
-				Sp_Log::warning('table: ' . $this->_table_key . ',' . __CLASS__ . '->'. __FUNCTION__ .': '.print_r($sth->errorInfo(),true));
+				Log::warning('db: ' . $this->_db_key . ',' . __CLASS__ . '->'. __FUNCTION__ .': '.print_r($sth->errorInfo(),true));
 			}
 			$ret = $sth->execute($input_parms);
 			if($ret && in_array($this->_operate, array('UPDATE','DELETE')) ) {
@@ -63,7 +63,7 @@ class Da_Wrapper_Write extends Da_Wrapper_Abstract
 			$ret = $dbh->exec($sql);
 		}
 		if(!$ret) {
-			Sp_Log::warning('table: ' . $this->_table_key . ',' . __CLASS__ . '->'. __FUNCTION__ .': '.print_r($dbh->errorInfo(),true));
+			Log::warning('db: ' . $this->_db_key . ',' . __CLASS__ . '->'. __FUNCTION__ .': '.print_r($dbh->errorInfo(),true));
 			
 		}
 		if($ret && $this->_operate == 'INSERT' && $dbh->getAttribute(PDO::ATTR_DRIVER_NAME) == 'mysql') {

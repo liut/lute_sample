@@ -10,7 +10,7 @@
  */
 
 /** 简短的目录分隔符 */
-define( 'DS', DIRECTORY_SEPARATOR );
+define('DS', DIRECTORY_SEPARATOR);
 
 
 // 初始化加载环境
@@ -21,7 +21,7 @@ Loader::init();
  *
  * 装载器
  */
-abstract class Loader
+final class Loader
 {
 	
 	/**
@@ -49,8 +49,8 @@ abstract class Loader
 	 *
 	 * example:
 	 * <code>
-	 * // 假设要载入的文件完整路径为 /www/app/Service/Products.php
-	 * Loader::import('/www/app');
+	 * // 假设要载入的文件完整路径为 /wroot/class/Service/Products.php
+	 * Loader::import('/wroot/class');
 	 * Loader::loadClass('Service_Products');
 	 * </code>
 	 *
@@ -76,7 +76,7 @@ abstract class Loader
 	 * Db/Driver.php）。
 	 *
 	 * loadClass() 会首先尝试从开发者指定的搜索路径中查找类的定义文件。
-	 * 搜索路径可以用 Container::import() 添加，或者通过 $dirs 参数提供。
+	 * 搜索路径可以用 Loader::import() 添加，或者通过 $dirs 参数提供。
 	 *
 	 * 如果没有指定 $dirs 参数和搜索路径，那么 loadClass() 会通过 PHP 的
 	 * include_path 设置来查找文件。
@@ -99,7 +99,7 @@ abstract class Loader
 			$dirs = array_merge($dirs, self::$CLASS_PATH);
 		}
 
-		$filename = str_replace('_', DIRECTORY_SEPARATOR, $className);
+		$filename = strtr($className, '_\\', '//');//str_replace('_', DIRECTORY_SEPARATOR, $className);
 		if ($filename != $className) {
 			$dirname = dirname($filename);
 			foreach ($dirs as $offset => $dir) {
@@ -107,7 +107,7 @@ abstract class Loader
 					$dirs[$offset] = $dirname;
 				} else {
 					$dir = rtrim($dir, '\\/');
-					$dirs[$offset] = $dir . DIRECTORY_SEPARATOR . $dirname;
+					$dirs[$offset] = $dir . DS . $dirname;
 				}
 			}
 			$filename = basename($filename) . '.php';
@@ -135,7 +135,7 @@ abstract class Loader
 	 *
 	 * example:
 	 * <code>
-	 * Container::loadFile('Table/Products.php');
+	 * Loader::loadFile('Table/Products.php');
 	 * </code>
 	 *
 	 * @param string $filename 要载入的文件名
@@ -157,7 +157,7 @@ abstract class Loader
 		}
 
 		foreach ($dirs as $dir) {
-			$path = rtrim($dir, '\\/') . DIRECTORY_SEPARATOR . $filename;
+			$path = rtrim($dir, '\\/') . DS . $filename;
 			if (is_file($path) || self::isReadable($path)) {
 				return $once ? include_once $path : include $path;
 			}
@@ -194,12 +194,13 @@ abstract class Loader
 	 *
 	 * example:
 	 * <code>
-	 * $service = Container::getSingleton('Service_Products');
+	 * $service = Loader::getSingleton('Service_Products');
 	 * </code>
 	 *
 	 * @param string $classname 要获取的对象的类名字
 	 *
 	 * @return object
+	 * @deprecated
 	 */
 	public static function getSingleton($classname)
 	{
@@ -217,10 +218,10 @@ abstract class Loader
 	 * example:
 	 * <code>
 	 * // 注册一个对象
-	 * Container::register(new MyObject(), 'my_obejct');
+	 * Loader::register(new MyObject(), 'my_obejct');
 	 * .....
 	 * // 稍后取出对象
-	 * $obj = Qee::registry('my_object');
+	 * $obj = Loader::registry('my_object');
 	 * </code>
 	 *
 	 * Container 提供一个对象注册表，开发者可以将一个对象以特定名称注册到其中。
@@ -228,7 +229,7 @@ abstract class Loader
 	 * 当没有提供 $name 参数时，则以对象的类名称作为注册名。
 	 *
 	 * 当 $persistent 参数为 true 时，对象将被放入持久存储区。在下一次执行脚本时，
-	 * 可以通过 Container::registry() 取出放入持久存储区的对象，无需重新构造对象。
+	 * 可以通过 Loader::registry() 取出放入持久存储区的对象，无需重新构造对象。
 	 * 利用这个特性，开发者可以将一些需要大量构造时间的对象放入持久存储区，
 	 * 从而避免每一次执行脚本都去做对象构造操作。
 	 *
@@ -237,16 +238,17 @@ abstract class Loader
 	 *
 	 * example:
 	 * <code>
-	 * if (!Container::isRegister('ApplicationObject')) {
-	 * 		Container::loadClass('Application');
-	 * 		Container::register(new Application(), 'ApplicationObject', true);
+	 * if (!Loader::isRegister('ApplicationObject')) {
+	 * 		Loader::loadClass('Application');
+	 * 		Loader::register(new Application(), 'ApplicationObject', true);
 	 * }
-	 * $app = Container::registry('ApplicationObject');
+	 * $app = Loader::registry('ApplicationObject');
 	 * </code>
 	 *
 	 * @param object $obj 要注册的对象
 	 * @param string $name 注册的名字
 	 * @param boolean $persistent 是否将对象放入持久化存储区
+	 * @deprecated
 	 */
 	public static function register($obj, $name = null, $persistent = false)
 	{
@@ -258,17 +260,18 @@ abstract class Loader
 			return self::$OBJECTS[$name];
 		}
 
-		throw new Exception('Duplicate entry "Container::register('.$name.')" for key "'.$name.'"');
+		throw new Exception('Duplicate entry "Loader::register('.$name.')" for key "'.$name.'"');
 	}
 
 	/**
 	 * 取得指定名字的对象实例，如果指定名字的对象不存在则抛出异常
 	 *
-	 * 使用示例参考 Container::register()。
+	 * 使用示例参考 Loader::register()。
 	 *
 	 * @param string $name 注册名
 	 *
 	 * @return object
+	 * @deprecated
 	 */
 	public static function registry($name)
 	{
@@ -282,11 +285,12 @@ abstract class Loader
 	/**
 	 * 检查指定名字的对象是否已经注册
 	 *
-	 * 使用示例参考 Container::register()。
+	 * 使用示例参考 Loader::register()。
 	 *
 	 * @param string $name 注册名
 	 *
 	 * @return boolean
+	 * @deprecated
 	 */
 	public static function isRegistered($name)
 	{
@@ -422,58 +426,63 @@ EOT;
 	 * @param boolean $end
 	 * @return void
 	 */
-	public static function response($code = 404, $msg = '', $end = true)
+	public static function out($code = 404, $msg = '', $end = true)
 	{
-		if($code == 404) {
-			header("HTTP/1.0 404 Not Found", true, 404);
-			header("Status: 404 Not Found");
-			//if(empty($msg)) echo 'Not Found', PHP_EOL;
-		} elseif($code == 403) {
-			header("HTTP/1.0 403 Forbidden", true, 403);
-			header("Status: 403 Forbidden");
-			//if(empty($msg)) echo 'Forbidden', PHP_EOL;
-		} else {
-			header("HTTP/1.0 400 Bad Request");
-			header("Status: 400 Bad Request");
+		static $status = array(
+			400 => '400 Bad Request',
+			401 => '401 Unauthorized',
+			402 => '402 Payment Required',
+			403 => '403 Forbidden',
+			404 => '404 Not Found',
+			405 => '405 Method Not Allowed',
+			406 => '406 Not Acceptable',
+		);
+		$code = (int)$code;
+		if (!isset($status[$code])) {
+			$code = 404;
 		}
+		
 		if (!empty($msg)) echo $msg;
 		if($end) exit();
 	}
-	//old
-	public static function outputEnd($msg, $code = 404, $end = true)
-	{
-		self::response($code, $msg, $end);
-	}
 
 	/**
-	 * 加载配置
+	 * 加载配置, 按 name.conf.php -> name.ini -> name.yml 的顺序
 	 * 
 	 * @param string $name
 	 * @return mixed
 	 */
 	public static function & config($name, $inject = null)
 	{
-		// TODO: support ini and yaml
 		static $settings = array();
 		
 		if(!isset($settings[$name]) || $settings[$name] == null) {
+			if (!preg_match("#^[a-z][a-z0-9]{1,9}$#i", $name)) {
+				throw new InvalidArgumentException('invalid config name');
+			}
 			$file = $name .'.conf.php';
-			$dir = defined('CONF_ROOT') ? rtrim(CONF_ROOT, "\\/") . DIRECTORY_SEPARATOR : NULL;
-			$settings[$name] = self::loadFile($file, FALSE, $dir);
-			if (is_null($settings[$name])) {
+			$dir = defined('CONF_ROOT') ? rtrim(CONF_ROOT, "\\/") . DS : NULL;
+			if (!empty(self::$_domain)) {
+				$dir = (is_null($dir) ? '' : $dir) . '_' . self::$_domain; // 为了查看时醒目，多域配置目录前加'_'
+			}
+			//$settings[$name] = self::loadFile($file, FALSE, $dir);
+			if (is_file($dir . $file)) {
+				$settings[$name] = include $dir . $file;
+			}
+			if (!isset($settings[$name])) {
 				is_null($dir) && $dir = 'config/';
 				$file = $dir . $name . '.ini';
 				if (is_file($file)) {
 					$settings[$name] = parse_ini_file($file, TRUE);
 				}
-				if (is_null($settings[$name]) || $settings[$name] === FALSE) {
+				if (!isset($settings[$name]) || $settings[$name] === FALSE) {
 					$file = $dir . $name . '.yml';
 					if (is_file($file) && function_exists('yaml_parse_file') ) {
 						$settings[$name] = yaml_parse_file($file);
 					}
 				}
 			}
-			if (is_null($settings[$name]) && is_null($inject)) {
+			if (!isset($settings[$name]) && is_null($inject)) {
 				throw new InvalidArgumentException('config file '.$name.'.* not found');
 			}
 			if (is_array($inject)) { // TODO: here or move out of here, that's question
@@ -481,6 +490,31 @@ EOT;
 			}
 		}
 		return $settings[$name];
+	}
+
+	/**
+	 * @var domain 是配置系统的逻辑区分
+	 */
+	private static $_domain = null;
+	/**
+	 * setDomain
+	 * @param string $domain
+	 */
+	public static function setDomain($domain)
+	{
+		if (preg_match("#^[a-z][a-z0-9]{1,9}$#i", $domain)) {
+			self::$_domain = $domain;
+		} else {
+			throw new InvalidArgumentException('invalid domain value');
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	public static function getDomain()
+	{
+		return self::$_domain;
 	}
 
 	/**

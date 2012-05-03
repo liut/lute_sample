@@ -42,7 +42,7 @@ class Request
 	 */
 	protected function __construct()
 	{
-		$this->_params['CLIENT_IP'] = $this->getIp();
+		$this->_params['CLIENT_IP'] = $this->getClientIp();
 		$this->_params['CLIENT_AGENT'] = $this->getAgent();
 		$this->_params['REQUEST_TIME'] = isset($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time();
 		$this->_params['HTTP_REFERER'] = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
@@ -160,6 +160,16 @@ class Request
 	{
 		return isset($_POST) && 'POST' === $_SERVER['REQUEST_METHOD'];
 	}
+	
+	/**
+	 * 是否是 Ajax 调用
+	 * 
+	 * @return boolean
+	 */
+	public function isAjax()
+	{
+		return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest';
+	}
 
 	/**
 	 * 返回浏览器信息
@@ -190,11 +200,12 @@ class Request
 	 * 
 	 * @return string
 	 */
-	public function getIp()
+	public function getClientIp()
 	{
 		if (isset($_SERVER["HTTP_X_FORWARDED_FOR"])) 
 		{
-			return $_SERVER["HTTP_X_FORWARDED_FOR"];
+			$ips = explode(',', $_SERVER["HTTP_X_FORWARDED_FOR"], 1);
+			return $ips[0];
 		} 
 		elseif (isset($_SERVER["HTTP_CLIENT_IP"])) 
 		{

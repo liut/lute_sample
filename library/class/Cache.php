@@ -19,7 +19,7 @@
  * Example: 
  * 	required: CONF_ROOT . cache.conf.php:
  *  
- * 	$cache = Cache::factory('section_name'); // section_name defined in config
+ * 	$cache = Cache::farm('section_name'); // section_name defined in config
  * 	$key = 'key1';
  * 	$data = 'abc';
  * 	$ret = $cache->set($key, $data, 60);	// set
@@ -68,8 +68,19 @@ abstract class Cache
 	 * 
 	 * @param string $section
 	 * @return object
+	 * @deprecated by ::farm
 	 */
 	public static function factory($section = 'default')
+	{
+		return static::farm($section);
+	}
+	
+	/**
+	 * 按指定配置名称产生一个实例
+	 * @param string $section
+	 * @return object
+	 */
+	public static function farm($section = 'default')
 	{
 		static $instances = array();
 		if ($section === 'all_instances') {
@@ -92,8 +103,8 @@ abstract class Cache
 			if (isset($config['option'])) {
 				$instances[$section]->init($config['option']);
 			}
-			
-			
+
+
 		}
 		return $instances[$section];
 	}

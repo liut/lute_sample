@@ -43,7 +43,7 @@ echo "<!-- included:\n", print_r(get_included_files(), true), "\n-->\n";
 
 if(class_exists('Cache', false))
 {
-	echo "<!-- cache:\n", htmlspecialchars(print_r(Cache::factory('all_instances'), true)), "\n-->\n";
+	echo "<!-- cache:\n", htmlspecialchars(print_r(Cache::farm('all_instances'), true)), "\n-->\n";
 }
 
 if (class_exists('Da_Wrapper', false))
@@ -65,23 +65,10 @@ if (class_exists('Da_Wrapper', false))
 	echo "\n-->\n";
 }
 
-if(class_exists('Db_Factory', false))
-{
-	//var_dump(Db_Factory::getDbos());
-	foreach(Db_Factory::getDbos() as $key => $dbo)
-	{
-		echo "<!-- \n";
-		echo $key, ":\n";
-		echo 'class: ', get_class($dbo), ":\n";
-		echo 'querynum: ', $dbo->querynum, ":\n";
-		print_r($dbo->queries);
-		echo "\n-->\n";
-	}
-}
 
-if(class_exists('Sp_Log', false))
+if(class_exists('Log', false))
 {
-	echo "<!-- logs:\n", print_r(Sp_Log::getLogs(), true), "\n-->\n";
+	echo "<!-- logs:\n", print_r(Log::getLogs(), true), "\n-->\n";
 }
 
 //var_dump(xdebug_get_declared_vars());

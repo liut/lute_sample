@@ -220,23 +220,23 @@ class Da_Wrapper_Select extends Da_Wrapper_Abstract
 	private function getDoSth($count = false)
 	{
 		$sql = $this->genSql($count);
-		Sp_Log::debug(__CLASS__ . '->'. __FUNCTION__ .': '.$sql);
+		Log::debug(__CLASS__ . '->'. __FUNCTION__ .': '.$sql);
 		$dbh = $this->getDbh(); //var_dump($dbh);
 		$input_parms = $this->getParams(); //var_dump($input_parms);
 		if(is_array($input_parms) && count($input_parms) > 0) {
 			$sth = $dbh->prepare($sql);
 			$ret = $sth->execute($input_parms);
 			if(!$ret) {
-				Sp_Log::warning(__CLASS__ . '->'. __FUNCTION__ .' execute: '.print_r($sth->errorInfo(), true));
+				Log::warning(__CLASS__ . '->'. __FUNCTION__ .' execute: '.print_r($sth->errorInfo(), true));
 			}
 		} else {
 			$sth = $dbh->query($sql);
 			if(!$sth){
-				Sp_Log::warning(__CLASS__ . '->'. __FUNCTION__ .' query: '.print_r($dbh->errorInfo(), true));
+				Log::warning(__CLASS__ . '->'. __FUNCTION__ .' query: '.print_r($dbh->errorInfo(), true));
 			}
 		}
 		if(!$sth) {
-			Sp_Log::warning(__CLASS__ . '->'. __FUNCTION__ . ' table : ' . $this->_table . ', : ' . print_r($dbh->errorInfo(),true));
+			Log::warning(__CLASS__ . '->'. __FUNCTION__ . ' table : ' . $this->_table . ', : ' . print_r($dbh->errorInfo(),true));
 		}
 		return $sth;
 	}
@@ -320,6 +320,7 @@ class Da_Wrapper_Select extends Da_Wrapper_Abstract
 	 * 
 	 * @param
 	 * @return void
+	 * @deprecated
 	 */
 	public function genCacheKey()
 	{

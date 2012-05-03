@@ -22,7 +22,7 @@ abstract class Da_Wrapper_Abstract
 	protected $_limit = 0;
 	protected $_offset = 0;
 	protected $_dbh;
-	protected $_table_key;
+	protected $_db_key;
 	protected $_cache_key;
 	protected $_pk_name;
 	protected $_pk_value;
@@ -35,9 +35,17 @@ abstract class Da_Wrapper_Abstract
 	 *
 	 * @return this
 	 */
-	public static function select()
+	public static function select($cond = array())
 	{
 		$obj = new Da_Wrapper_Select();
+		if (isset($cond['where']))
+			$obj->where($cond['where']);
+		if (isset($cond['order_by']))
+			$obj->orderby($cond['where']);
+		if (isset($cond['select']))
+			$obj->columns($cond['select']);
+		if (isset($cond['limit']))
+			$obj->columns($cond['limit']);
 		return $obj;
 	}
 
@@ -75,14 +83,37 @@ abstract class Da_Wrapper_Abstract
 	}
 
 	/**
-	 * function description
+	 * set db_key, see also da.config
 	 *
+	 * @param string $str, db_key
+	 * @return this
+	 */
+	public function db($str)
+	{
+		list($this->_ns, $this->_db, ) = explode(".", $str, 3);
+		$this->_db_key = $str;
+		$this->_cache_key = null;
+		return $this;
+	}
+
+	/**
+	 * set table
+	 *
+	 * @param string $table_key format: ns.db[.node][.schema].table
 	 * @return this
 	 */
 	public function table($table_key)
 	{
-		list($this->_ns, $this->_db, $this->_table) = explode(".", $table_key, 4);
-		$this->_table_key = $table_key;
+		$arr = Da_Wrapper::parseConfigKey($table_key);
+		if ($arr && isset($arr['table'])) {
+			
+			$this->_ns = $arr['ns'];
+			$this->_db = $arr['db'];
+			$this->_table = $arr['table'];
+			$this->_db_key = $arr['key'];
+		} else {
+			$this->_table = $table_key;
+		}
 		$this->_cache_key = null;
 		return $this;
 	}
@@ -204,96 +235,6 @@ abstract class Da_Wrapper_Abstract
 
 
 	/**
-	 * 返回 Cache 对象
-	 *
-	 * @return object
-	 */
-	protected function getCacheInstance()
-	{
-		if($this->_cacheobj === null)
-		{
-			$this->_cacheobj = Cache_Memcache::getInstance();
-		}
-		return $this->_cacheobj;
-	}
-
-	/**
-	 * 内部调用 Cache->get
-	 *
-	 * @param string $key
-	 */
-	protected function cacheGet($key) {
-		if ($this->_cachable && $cache = $this->getCacheInstance()) {
-			return $cache->get($key);
-		}
-		return FALSE;
-	}
-
-	/**
-	 * 内部调用 Cache->set
-	 *
-	 * @param string $key
-	 * @param mixed $var
-	 * @param int $expire
-	 */
-	protected function cacheSet($key, $var, $expire){
-		if ($this->_cachable && $cache = $this->getCacheInstance())
-			return $cache->set($key, $var, $expire);
-	}
-
-	/**
-	 * 内部调用 Cache->delete
-	 *
-	 * @param string $key
-	 */
-	protected function cacheRemove($key){
-		if ($this->_cachable && $cache = $this->getCacheInstance())
-			return $cache->delete($key);
-	}
-
-	/**
-	 * function description
-	 *
-	 * @param
-	 * @return void
-	 */
-	protected function getRowByPk($id)
-	{
-	//	$key =
-	//	$row = $this->cacheGet()
-		return ;
-	}
-
-	/**
-	 * function description
-	 *
-	 * @param
-	 * @return void
-	 */
-	protected function getMinLifetime()
-	{
-		$ret = Da_Wrapper::configValue('dc', $this->_ns, $this->_db, $this->_table, ':min_lifetime');
-		return $ret;
-	}
-
-	/**
-	 * function description
-	 *
-	 * @param
-	 * @return void
-	 */
-	protected function getLifetime()
-	{
-		$ret = Da_Wrapper::configValue('dc', $this->_ns, $this->_db, $this->_table, ':lifetime');
-		return $ret;
-	}
-
-	protected function getTablePkName()
-	{
-		return Da_Wrapper::configValue('dc', $this->_ns, $this->_db, $this->_table, ':primary_key');
-	}
-
-	/**
 	 * function description
 	 *
 	 * @param
@@ -301,7 +242,10 @@ abstract class Da_Wrapper_Abstract
 	 */
 	protected function getDbh()
 	{
-		if($this->_dbh == null) $this->_dbh = Da_Wrapper::dbo($this->_table_key);
+		if (empty($this->_db_key)) {
+			throw new Exception('need set db()');
+		}
+		if($this->_dbh == null) $this->_dbh = Da_Wrapper::dbo($this->_db_key);
 		return $this->_dbh;
 	}
 
