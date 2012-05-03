@@ -208,7 +208,7 @@ $ret = Da_Wrapper::delete()
 	->execute();
 ~~~
 
-> 其中db()方法可以省略，如省略会找到 da.conf 中的 default 项目，或者在table()方法中指定，table()的参数格式： ns.db[.node][.schema].table
+> 其中db()方法可以省略，如省略会找到 da.conf 中的 default 项目，或者在table()方法中指定，table()的参数格式： `ns.db[.node][.schema].table`
 
 2. 直接执行SQL
 
