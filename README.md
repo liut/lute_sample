@@ -41,14 +41,15 @@ namespace Sp\Web\Catalog;
 * Controller_Item
 */
 class Controller_Item extends \Sp\Web\Controller
-{	
+{
 	public function action_index()
 	{
 		# code...
-		echo 'Welcome ', time(), PHP_EOL;
+		//echo 'Welcome ', time(), PHP_EOL;
+		return array(302, '/home/');
 	}
 	
-	public function action_info($id = '')
+	public function action_info($id = NULL)
 	{
 		# code...
 		//var_dump('id: ', $id);
@@ -56,12 +57,13 @@ class Controller_Item extends \Sp\Web\Controller
 			$item = Model_Item::find($id);
 		}
 		else {
-			$item = Model_Item::find('first');
+			//$item = Model_Item::find('first');
+			return 404;
 		}
 		//var_dump($item);
 		
-		$this->_view->assign('item', $item);
-		$this->_view->display('catalog/item_info.tpl');
+		$data = array('item', $item);
+		return array('catalog/item_info.tpl', $data);
 	}
 }
 
