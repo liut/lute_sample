@@ -11,14 +11,13 @@
  * @version    $Id$
  */
 
-if(!class_exists('Smarty', FALSE))
+if(!class_exists('Smarty', FALSE) && defined('SMARTY_DIR'))
 {
 	include_once SMARTY_DIR . 'Smarty.class.php';
-	
-	if(!class_exists('Smarty', FALSE))
-	{
-		die('class Smarty not found!');
-	}
+}
+if(!class_exists('Smarty', FALSE))
+{
+	die("class Smarty not found!\n");
 }
 
 /**
@@ -47,11 +46,14 @@ class Eb_View extends Smarty
 		//Smarty 2 or 3 ?
 		method_exists('Smarty','Smarty') && $this->Smarty() || parent::__construct();
 		
-		$tpl_dir = isset($_SERVER["DOCUMENT_ROOT"]) ? $_SERVER["DOCUMENT_ROOT"] . '/templates/' : '';
+		$tpl_dir = isset($_SERVER["DOCUMENT_ROOT"]) ? $_SERVER["DOCUMENT_ROOT"] . '/templates' : '';
 		if(!empty($tpl_dir) && is_dir($tpl_dir)) {
-			$this->template_dir = $tpl_dir;
+			$this->addTemplateDir($tpl_dir);
 		}
-		elseif (defined('VIEW_SKINS_ROOT') && defined('VIEW_SKIN_DEFAULT'))
+		if (defined('APP_ROOT') && is_dir(APP_ROOT . 'templates')) {
+			$this->addTemplateDir(APP_ROOT . 'templates');
+		}
+		if (defined('VIEW_SKINS_ROOT') && defined('VIEW_SKIN_DEFAULT'))
 		{
 			$this->_parent_dir = VIEW_SKINS_ROOT;
 			$this->_dft_skin = VIEW_SKIN_DEFAULT;
@@ -283,7 +285,7 @@ class Eb_View extends Smarty
 	{
 		if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] && preg_match('/MSIE (7|8)/', $this->_request->getAgent())) { // 检测是否为IE
 			$content = $this->fetch($template, $cache_id, $compile_id, $parent);
-			$content = str_replace(array('http://'.L_HOST_STATIC.'/',L_URL_STAT,L_URL_USER), '/', $content);
+			$content = str_replace(array('http://'.L_STATIC_HOST.'/',L_URL_STAT,L_URL_USER), '/', $content);
 			//$content = str_replace('/wanlitong/', L_URL_USER.'wanlitong/', $content);
 			echo $content;
 		} else {
@@ -292,18 +294,33 @@ class Eb_View extends Smarty
 		}
 	}
 	
-	protected function make_template ($resource_type, $resource_name, &$template_source, &$template_timestamp, &$smarty_obj)
+	/**
+	 * Default Template Handler
+	 *
+	 * called when Smarty's file: resource is unable to load a requested file
+	 * 
+	 * @param string   $type     resource type (e.g. "file", "string", "eval", "resource")
+	 * @param string   $name     resource name (e.g. "foo/bar.tpl")
+	 * @param string  &$content  template's content
+	 * @param integer &$modified template's modification time
+	 * @param Smarty   $smarty   Smarty instance
+	 * @return string|boolean   path to file or boolean true if $content and $modified 
+	 *                          have been filled, boolean false if no default template 
+	 *                          could be loaded
+	 */
+	protected function make_template ($type, $name, &$content, &$modified, Smarty $smarty)
 	{
-		if( $resource_type == 'file' ) {
-			if ( ! is_readable ( $resource_name )) {
+		if( $type == 'file' ) {
+			if ( ! is_readable ( $name )) {
 				$skins = array($this->_cur_skin);
 				if ($this->_cur_skin != $this->_dft_skin) {
 					$skins[] = $this->_dft_skin;
 				}
 				foreach($skins as $skin) {
-					$file = $this->_parent_dir . $skin . '/' . $resource_name;
+					$file = $this->_parent_dir . $skin . '/' . $name;
 					if (is_readable ( $file )) {
-						$template_source = file_get_contents($file);
+						$content = file_get_contents($file);
+						$modified = filemtime($file);
 						return true;
 					}
 				}

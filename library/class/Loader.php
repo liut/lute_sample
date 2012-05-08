@@ -10,7 +10,7 @@
  */
 
 /** 简短的目录分隔符 */
-define('DS', DIRECTORY_SEPARATOR);
+defined('DS') || define('DS', DIRECTORY_SEPARATOR);
 
 
 // 初始化加载环境

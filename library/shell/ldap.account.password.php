@@ -24,7 +24,7 @@ if(!isset($argv[1])) {
 }
 
 // connect to ldap server
-$ldapconn = ldap_connect("team.eben.cn")
+$ldapconn = ldap_connect(defined('LDAP_HOST') ? LDAP_HOST : 'localhost')
     or die("Could not connect to LDAP server.");
 
 if ($ldapconn) {
@@ -35,7 +35,7 @@ if ($ldapconn) {
 
 	$username = $argv[1];
 	// using ldap bind
-	$ldaprdn  = sprintf('uid=%s,ou=people,dc=eben,dc=net', $username);     // ldap rdn or dn
+	$ldaprdn  = sprintf('uid=%s,ou=people,dc=imsto,dc=net', $username);     // ldap rdn or dn
 	$ldapbind = null;
 	
 	$i = 0;
@@ -60,7 +60,7 @@ if ($ldapconn) {
 		$new_password = _read_input('new password: ');
 		$i ++;
 		if (strlen($new_password) < 8) {
-			echo 'too short, try again.'
+			echo 'too short, try again.';
 			continue;
 		}
 		if ($ldapbind) {

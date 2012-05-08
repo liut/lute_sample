@@ -11,10 +11,10 @@
 
 ## 应用程序示例
 
-### 1. Model: /library/class/Eb/Web/Catalog/Model/Item.php
+### 1. Model: /library/class/Sp/Web/Catalog/Model/Item.php
 ~~~
 
-namespace Eb\Web\Catalog;
+namespace Sp\Web\Catalog;
 
 /**
 * Model_Item
@@ -22,7 +22,7 @@ namespace Eb\Web\Catalog;
 class Model_Item extends \Model
 {
 	
-	protected static $_db_name = 'eb.catalog';
+	protected static $_db_name = 'sp.catalog';
 	protected static $_table_name = 'catalog_items';
 	protected static $_primary_key = array('id');
 	
@@ -32,15 +32,15 @@ class Model_Item extends \Model
 
 ~~~
 
-### 2. Controller: /library/class/Eb/Web/Catalog/Controller/Item.php
+### 2. Controller: /library/class/Sp/Web/Catalog/Controller/Item.php
 ~~~
 
-namespace Eb\Web\Catalog;
+namespace Sp\Web\Catalog;
 
 /**
 * Controller_Item
 */
-class Controller_Item extends \Eb\Web\Controller
+class Controller_Item extends \Sp\Web\Controller
 {	
 	public function action_index()
 	{
@@ -123,13 +123,25 @@ server {
 
 ~~~
 
-### 6. 测试
+### 6. URL规则
+
+URL: 
 
 > http:// catalog.test /item/info/1234
 
-将映射为：
+调度器将查找类 `Controller_Item` 的 `action_info` 方法，并将后续的1234作为参数传入，因此调用过程将映射为：
 
-> index.php -> Displatcher::dispatch -> \Eb\Web\Catalog\Controller\Item -> \Eb\Web\Catalog\Model\Item
+> index.php -> Dispatcher::dispatch -> appclass/Controller/Item::action_info ('1234')
+
+
+URL:
+
+> http:// webapp.test /account/1234/edit
+
+由于不存在名为1234的action方法，会查找`__call`方法，如果存在，将映射为：
+
+> index.php -> Dispatcher::dispatch -> appclass/Controller/Account::__call(1234, array('edit'))
+
 
 
 
@@ -152,8 +164,8 @@ cp *.conf.php *.ini *.yml _newdomain/
 
 ~~~
 return array(
-	'default' => 'eb.cms.read',
-	'eb' => array(
+	'default' => 'sp.cms.read',
+	'sp' => array(
 		'passport' => array(
 			'dsn' => 'mysql:host=localhost;dbname=passport',
 			'charset' => 'utf8',
@@ -184,7 +196,7 @@ return array(
 
 ~~~
 $rows = Da_Wrapper::select()
-	->db('eb.passport')
+	->db('sp.passport')
 	->table('users')
 	->columns('id,name,email,created,status')
 	->where('status', '=', 2)
@@ -192,18 +204,18 @@ $rows = Da_Wrapper::select()
 	->getAll();
 
 $ret = Da_Wrapper::update()
-	->table('eb.passport.users')
+	->table('sp.passport.users')
 	->data(array('name'=>'newname'))
 	->where('id', 12)
 	->execute();
 
 $new_id = Da_Wrapper::insert()
-	->table('eb.passport.users')
+	->table('sp.passport.users')
 	->data(array('name'=>'newname','email'=>'newemail'))
 	->execute();
 
 $ret = Da_Wrapper::delete()
-	->table('eb.passport.users')
+	->table('sp.passport.users')
 	->where('id',12)
 	->execute();
 ~~~
@@ -213,7 +225,7 @@ $ret = Da_Wrapper::delete()
 2. 直接执行SQL
 
 ~~~
-$user_data = Da_Wrapper::getRow('eb.passport.users', 'SELECT * from users WHERE id = ?', array(12));
+$user_data = Da_Wrapper::getRow('sp.passport.users', 'SELECT * from users WHERE id = ?', array(12));
 ~~~
 
 Eol.
