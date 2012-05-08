@@ -13,7 +13,13 @@
  */
 //
 
-define('CONF_ROOT', __DIR__ . DIRECTORY_SEPARATOR );
+define('DS', DIRECTORY_SEPARATOR);
+
+if (isset($_SERVER['HTTP_MDOMAIN']) && preg_match("#^[a-z][a-z0-9]{1,9}$#i", $_SERVER['HTTP_MDOMAIN'])) {
+	define('CONF_ROOT', __DIR__ . DS . '_' . $_SERVER['HTTP_MDOMAIN'] . DS );
+} else {
+	define('CONF_ROOT', __DIR__ . DS );
+}
 
 // 加载核心起始配置文件
 include_once CONF_ROOT . 'config.inc.php';
@@ -80,10 +86,6 @@ elseif(isset($_SERVER['HTTP_HOST'])) { // http mod, cgi, cgi-fcgi
 		header('Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
 		header('Pragma: no-cache');
 	}
-}
-
-if (isset($_SERVER['HTTP_MDOMAIN']) && !empty($_SERVER['HTTP_MDOMAIN'])) {
-	Loader::setDomain($_SERVER['HTTP_MDOMAIN']);
 }
 
 
