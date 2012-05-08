@@ -461,10 +461,7 @@ EOT;
 				throw new InvalidArgumentException('invalid config name');
 			}
 			$file = $name .'.conf.php';
-			$dir = defined('CONF_ROOT') ? rtrim(CONF_ROOT, "\\/") . DS : NULL;
-			if (!empty(self::$_domain)) {
-				$dir = (is_null($dir) ? '' : $dir) . '_' . self::$_domain; // 为了查看时醒目，多域配置目录前加'_'
-			}
+			$dir = defined('CONF_ROOT') ? rtrim(CONF_ROOT, "\\/") . DS : '';
 			//$settings[$name] = self::loadFile($file, FALSE, $dir);
 			if (is_file($dir . $file)) {
 				$settings[$name] = include $dir . $file;
@@ -490,31 +487,6 @@ EOT;
 			}
 		}
 		return $settings[$name];
-	}
-
-	/**
-	 * @var domain 是配置系统的逻辑区分
-	 */
-	private static $_domain = null;
-	/**
-	 * setDomain
-	 * @param string $domain
-	 */
-	public static function setDomain($domain)
-	{
-		if (preg_match("#^[a-z][a-z0-9]{1,9}$#i", $domain)) {
-			self::$_domain = $domain;
-		} else {
-			throw new InvalidArgumentException('invalid domain value');
-		}
-	}
-	
-	/**
-	 * 
-	 */
-	public static function getDomain()
-	{
-		return self::$_domain;
 	}
 
 	/**
