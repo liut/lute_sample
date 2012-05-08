@@ -83,16 +83,16 @@ include_once 'init.php';
 
 defined('DOC_ROOT') || define('DOC_ROOT', __DIR__.DS);
 
-\Sp\Web\Dispatcher::dispatch(array(
+Dispatcher::dispatch(array(
 	'namespace' => '\Sp\Web\Catalog',
 	'default_controller' => 'home',
 	'default_action' => 'index'
 ));
 
-// or TODO: 修改 Dispatcher 定义，不使用namespace, 并添加自定义类位置
+// or TODO: 修改 Dispatcher 定义，允许不使用namespace, 并添加自定义类位置
 
 Loader::import(WEB_ROOT . 'appclass');
-Sp_Web_Dispatcher::dispatch(array(
+Dispatcher::dispatch(array(
 	'default_controller' => 'home',
 	'default_action' => 'index'
 ));
