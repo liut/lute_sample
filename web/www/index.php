@@ -1,15 +1,14 @@
 <?PHP
 
-include_once 'init.php';
+include_once dirname(dirname(__DIR__)) . '/config/init.php';
+
+Loader::import(__DIR__ . DS . '_class');
 
 defined('DOC_ROOT') || define('DOC_ROOT', __DIR__.DS);
 
 
-\Eb\Web\Dispatcher::dispatch(array(
-	'namespace' => '\Eb\Web\Passport',
-	'default_controller' => 'account',
+Dispatcher::start(array(
+	'default_controller' => 'home',
 	'default_action' => 'index'
 ));
 
-
-?>
