@@ -9,78 +9,45 @@
  * @words           Init
  * @Revised Information
  * $Id$
- * 
+ *
  */
 //
 
-define('DS', DIRECTORY_SEPARATOR);
+defined('DS') || define('DS', DIRECTORY_SEPARATOR);
 
 if (isset($_SERVER['HTTP_MDOMAIN']) && preg_match("#^[a-z][a-z0-9]{1,9}$#i", $_SERVER['HTTP_MDOMAIN'])) {
 	define('CONF_ROOT', __DIR__ . DS . '_' . $_SERVER['HTTP_MDOMAIN'] . DS );
+	define('CUSTOM_DOMAIN', $_SERVER['HTTP_MDOMAIN']);
+	define('HAS_MULTIDOMAIN', TRUE);
 } else {
 	define('CONF_ROOT', __DIR__ . DS );
 }
 
-// 加载核心起始配置文件
-include_once CONF_ROOT . 'config.inc.php';
-
-$xhprof_on = false;
-if (defined('_PS_DEBUG')) {
-	$xhprof_on = true;
-	if (extension_loaded('xhprof')) {
-		include_once LIB_ROOT . 'include/xhprof/utils/xhprof_lib.php';
-		include_once LIB_ROOT . 'include/xhprof/utils/xhprof_runs.php';
-		xhprof_enable(XHPROF_FLAGS_CPU + XHPROF_FLAGS_MEMORY);
-	}
+if (!defined('APP_ROOT')) {
+	include_once __DIR__ . DS . 'config.inc.php';
 }
 
-if(defined('ENABLE_BENCHMARK') && TRUE === ENABLE_BENCHMARK) {
-	// for Benchmark
-	require_once 'Benchmark/Timer.php';
-	$g_timer = new Benchmark_Timer();
-	$g_timer->start();
-	$g_timer->setMarker('web.init: start');
-
-}
+include_once LIB_ROOT . 'include/profiling.php';
 
 // Global Loader
-include_once LIB_ROOT . 'class/Loader.php'; 
+include_once LIB_ROOT . 'class'.DS.'Loader.php';
 
-isset($g_timer) && $g_timer->setMarker('lib.loader loaded');
+Loader::import(APP_ROOT . 'appclass', TRUE);
+Loader::import(WEB_ROOT . '_class', TRUE);
+
+if (defined('_PS_DEBUG') && TRUE === _PS_DEBUG) {
+	set_error_handler(['Loader','printError']);
+}
 
 if (PHP_SAPI === 'cli') { // command line
 	isset($argc) || $argc = $_SERVER['argc'];
 	isset($argv) || $argv = $_SERVER['argv'];
 }
-elseif(isset($_SERVER['HTTP_HOST'])) { // http mod, cgi, cgi-fcgi
+elseif (isset($_SERVER['HTTP_HOST'])) { // http mod, cgi, cgi-fcgi
 	if(headers_sent()) {
 		exit('headers already sent');
 	}
-	$format = 'html';
-	if (isset($_GET['format'])) {
-		$format = $_GET['format'];
-	} elseif (isset($_POST['format'])) {
-		$format = $_POST['format'];
-	}
-	switch ($format) {
-		case 'js':
-			$ctype = 'text/javascript';
-			break;
-		case 'json':
-			$ctype = 'applcation/json'; //'text/javascript';//'text/x-json';//
-			break;
-		case 'xml':
-			$ctype = 'text/xml';
-			break;
-		default:
-			$ctype = 'text/html';
-			break;
-	}
-	
-	if(defined('RESPONSE_CHARSET')) header('Content-Type: '.$ctype.'; charset='.RESPONSE_CHARSET);
-	defined('CONTENT_TYPE') || define('CONTENT_TYPE', $ctype );
-	unset($format, $ctype);
-	
+
 	if (defined('RESPONSE_NO_CACHE')) {
 		header('Expires: Fri, 02 Oct 98 20:00:00 GMT');
 		header('Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
